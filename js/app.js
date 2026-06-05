@@ -69,6 +69,7 @@
   function icon(name, cls) {
     var P = {
       home: '<path d="M3 11.5 12 4l9 7.5M5 10v10h14V10"/>',
+      fwd: '<path d="M9 5l7 7-7 7"/>',
       lease: '<path d="M7 3h7l4 4v14H7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/>',
       card: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
       gauge: '<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-3"/>',
@@ -93,7 +94,7 @@
       'alt="AmanRent" class="' + (cls || '') + '">';
   }
 
-  /* ---- top bar + menu ------------------------------------------- */
+  /* ---- top bar -------------------------------------------------- */
   function topBar() {
     var langBtn =
       '<button data-action="lang-toggle" class="tap px-3 rounded-full bg-white/10 text-white text-sm font-semibold" ' +
@@ -101,31 +102,40 @@
 
     var menuBtn =
       '<button data-action="menu-toggle" class="tap w-11 rounded-full bg-white/10 text-white grid place-items-center" ' +
+      'aria-haspopup="true" aria-expanded="' + (menuOpen ? 'true' : 'false') + '" ' +
       'aria-label="' + AR.t('menu') + '">' + icon('dots', 'w-5 h-5') + '</button>';
 
-    var menu = menuOpen ? (
-      '<div class="absolute end-2 top-14 z-40 w-52 card-light p-1 text-start fade-up">' +
-        item('switch-role', AR.t('switch_role')) +
-        item('take-tour', AR.t('take_tour')) +
-        '<div class="h-px bg-black/10 my-1"></div>' +
-        item('reset-demo', '<span class="text-red-600">' + AR.t('reset_demo') + '</span>') +
-      '</div>'
-    ) : '';
-
-    function item(action, label) {
-      return '<button data-action="' + action + '" class="w-full text-start px-3 py-3 rounded-lg hover:bg-black/5 text-sm font-medium">' + label + '</button>';
-    }
-
+    // logo + wordmark may shrink/truncate; the controls never shrink, so
+    // the language toggle and menu button can never be crowded off-bar.
     return '' +
-      '<header class="relative shrink-0 bg-darknavy/95 backdrop-blur px-3 h-14 flex items-center gap-2 border-b border-white/10">' +
-        '<div class="flex items-center gap-2 min-w-0">' +
-          logoImg('dark', 'w-8 h-8') +
+      '<header class="shrink-0 bg-darknavy/95 backdrop-blur px-3 h-14 flex items-center gap-2 border-b border-white/10">' +
+        '<div class="flex items-center gap-2 min-w-0 flex-1">' +
+          logoImg('dark', 'w-8 h-8 shrink-0') +
           '<span class="font-bold text-white truncate">' + AR.t('brand') + '</span>' +
-          '<span class="hidden xs:inline text-[10px] px-1.5 py-0.5 rounded bg-emerald/15 text-emerald border border-emerald/30">' + AR.t('mock_badge') + '</span>' +
+          '<span class="hidden xs:inline shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald/15 text-emerald border border-emerald/30">' + AR.t('mock_badge') + '</span>' +
         '</div>' +
-        '<div class="ms-auto flex items-center gap-2">' + langBtn + menuBtn + '</div>' +
-        menu +
+        '<div class="flex items-center gap-2 shrink-0">' + langBtn + menuBtn + '</div>' +
       '</header>';
+  }
+
+  /* ---- menu (popover, rendered at shell level so it floats above
+     everything with its own scrim — never overlapping the top-bar
+     controls, and clearly elevated above page content) ------------ */
+  function menuOverlay() {
+    if (!menuOpen) return '';
+    function item(action, label) {
+      return '<button data-action="' + action + '" class="w-full text-start px-3 py-3 rounded-lg hover:bg-black/5 active:bg-black/10 text-sm font-medium tap">' + label + '</button>';
+    }
+    return '' +
+      '<div class="absolute inset-0 z-[60]">' +
+        '<div data-action="menu-close" class="absolute inset-0 bg-black/40"></div>' +
+        '<div role="menu" class="absolute end-2 top-[60px] w-56 max-w-[78%] card-light p-1 rounded-2xl shadow-2xl ring-1 ring-black/10 fade-up text-start">' +
+          item('switch-role', AR.t('switch_role')) +
+          item('take-tour', AR.t('take_tour')) +
+          '<div class="h-px bg-black/10 my-1"></div>' +
+          item('reset-demo', '<span class="text-red-600">' + AR.t('reset_demo') + '</span>') +
+        '</div>' +
+      '</div>';
   }
 
   /* ---- bottom nav ----------------------------------------------- */
@@ -163,6 +173,7 @@
             AR.screens.content(view, params, S) +
           '</main>' +
           bottomNav() +
+          menuOverlay() +
         '</div>';
     }
     if (AR.screens.mount) AR.screens.mount(view, params, S);
@@ -235,6 +246,9 @@
         break;
       case 'menu-toggle':
         menuOpen = !menuOpen; render();
+        break;
+      case 'menu-close':
+        menuOpen = false; render();
         break;
       case 'switch-role':
         setRole(S.role === 'tenant' ? 'landlord' : 'tenant');
@@ -315,6 +329,7 @@
     setRole: setRole,
     setLang: setLang,
     render: render,
+    approve: approvePayment,
     toast: toast,
     icon: icon,
     logoImg: logoImg,

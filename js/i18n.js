@@ -69,6 +69,21 @@
     back_home:        { en: 'Back to home',     ar: 'العودة للرئيسية' },
     score_ticked:     { en: 'Your score went up', ar: 'ارتفعت درجتك' },
 
+    /* ---- Multi-step approval flow (Review → Slide → Processing → Done) ---- */
+    ap_narr_review:    { en: 'Check who you\'re paying and how much.', ar: 'تحقّق ممّن تدفع له وكم المبلغ.' },
+    ap_narr_slide:     { en: 'Slide to approve, just like confirming a real payment.', ar: 'اسحب للموافقة، تماماً كتأكيد دفعة حقيقية.' },
+    ap_narr_processing:{ en: 'AmanRent is sending your rent over CliQ.', ar: 'يقوم أمان رنت بإرسال إيجارك عبر كليك.' },
+    ap_narr_success:   { en: 'Rent sent. Your landlord receives it automatically — no message needed.', ar: 'تم إرسال الإيجار. يستلمه مالكك تلقائياً — دون الحاجة لأي رسالة.' },
+    ap_tap_confirm:    { en: 'Tap to confirm',  ar: 'اضغط للتأكيد' },
+    ap_confirmed:      { en: 'Confirmed',        ar: 'تم التأكيد' },
+    ap_review_hint:    { en: 'Confirm the amount and who you\'re paying, then slide to approve.', ar: 'أكّد المبلغ ومَن تدفع له، ثم اسحب للموافقة.' },
+    slide_label:       { en: 'Slide to approve', ar: 'اسحب للموافقة' },
+    slide_done:        { en: 'Approved',         ar: 'تمت الموافقة' },
+    slide_a11y:        { en: 'Slide to approve the payment. Press Enter to approve.', ar: 'اسحب للموافقة على الدفعة. اضغط Enter للموافقة.' },
+    processing_label:  { en: 'Processing…',      ar: 'جارٍ المعالجة…' },
+    success_landlord_line: { en: 'Your landlord will now receive this rent automatically on the 1st — no message sent.', ar: 'سيستلم مالكك هذا الإيجار تلقائياً الآن في الأول من الشهر — دون إرسال أي رسالة.' },
+    your_score:        { en: 'Your score',       ar: 'درجتك' },
+
     /* ---- Lease screen ---- */
     lease_title:      { en: 'Your lease',       ar: 'عقد إيجارك' },
     parties:          { en: 'Parties',          ar: 'الأطراف' },
@@ -187,7 +202,7 @@
     t3_title:         { en: 'Your next rent',      ar: 'إيجارك القادم' },
     t3_body:          { en: 'Here is your next rent: the amount, due on the 1st, your landlord and the property. AmanRent prepares everything in advance.', ar: 'هذا إيجارك القادم: المبلغ، المستحق في الأول من الشهر، ومالكك والعقار. يجهّز أمان رنت كل شيء مسبقاً.' },
     t4_title:         { en: 'One-tap approval',    ar: 'موافقة بنقرة واحدة' },
-    t4_body:          { en: 'On the 1st at 9:01 AM you get one request. Approve once and your rent is sent. Tap Review, then Approve.', ar: 'في الأول من الشهر الساعة 9:01 صباحاً تصلك طلب واحد. وافق مرة ويُرسَل إيجارك. اضغط مراجعة ثم موافقة.' },
+    t4_body:          { en: 'On the 1st at 9:01 AM you get one request. Tap Review, confirm who you\'re paying, then slide to approve — just like a real CliQ payment.', ar: 'في الأول من الشهر الساعة 9:01 صباحاً تصلك طلب واحد. اضغط مراجعة، أكّد مَن تدفع له، ثم اسحب للموافقة — تماماً كدفعة كليك حقيقية.' },
     t5_title:         { en: 'Done',               ar: 'تم' },
     t5_body:          { en: 'That is the whole job for the tenant. One tap, every month.', ar: 'هذه هي مهمة المستأجر بالكامل. نقرة واحدة، كل شهر.' },
     t6_title:         { en: 'Your lease is legally binding', ar: 'عقدك ملزم قانونياً' },

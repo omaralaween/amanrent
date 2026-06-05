@@ -174,7 +174,7 @@
       '</div>';
 
     return wrap(
-      '<h1 id="greetingBlock" class="text-2xl font-bold mb-4">' + t('greeting', { name: L(S.tenantName) }) + '</h1>' +
+      '<h1 id="greetingBlock" class="text-2xl font-bold mb-4 truncate">' + t('greeting', { name: L(S.tenantName) }) + '</h1>' +
       notif + nextCard + automation + scoreWidget
     );
   }
@@ -187,25 +187,62 @@
   /* -------------------------------------------------------------- */
   /*  TENANT — approval                                             */
   /* -------------------------------------------------------------- */
+  /* Step A is rendered here; Steps B (slide), C (processing), D (success)
+     are driven by setupApproval() in mount(). The instructor performs
+     each real action — nothing auto-commits. */
   function tenantApproval(S) {
     var ref = 'RENT/' + due_ym();
     return wrap(
       backHeader(t('approve_title'), 'tenant/home') +
-      '<div class="card p-5">' +
-        '<p class="text-sm text-white/60">' + t('amount') + '</p>' +
-        '<div class="text-4xl font-bold tnum text-emerald mb-1">' + money(S.lease.rent) + '</div>' +
-        '<p class="text-xs text-white/50 mb-4">' + t('via_cliq') + '</p>' +
-        '<div class="space-y-2 text-sm border-t border-white/10 pt-4">' +
-          row(t('recipient'), L(S.lease.landlord)) +
-          row(t('property_label'), L(S.lease.property)) +
-          row(t('reference'), ref) +
-          row(t('date'), AR.fmtDate(AR.app.dueISO)) +
+      '<div id="approvePanel">' +
+        '<div id="approveNarration" class="narration text-sm rounded-xl px-3 py-2 leading-snug mb-4">' + t('ap_narr_review') + '</div>' +
+        '<div class="card p-4">' +
+          '<p class="text-xs text-white/50 mb-3">' + t('via_cliq') + '</p>' +
+          ackChip('amount', t('amount'), money(S.lease.rent), 'text-2xl font-bold tnum text-emerald') +
+          ackChip('recipient', t('recipient'), L(S.lease.landlord), 'font-semibold') +
+          '<div class="space-y-2 text-sm border-t border-white/10 pt-3 mt-1">' +
+            row(t('property_label'), L(S.lease.property)) +
+            row(t('reference'), ref) +
+            row(t('date'), AR.fmtDate(AR.app.dueISO)) +
+          '</div>' +
         '</div>' +
-      '</div>' +
-      '<p class="text-xs text-white/55 leading-snug my-4">' + t('cliq_explain') + '</p>' +
-      '<button id="approveBtn" data-action="approve-payment" class="btn w-full bg-emerald text-white text-lg">' + t('approve_payment') + '</button>' +
-      '<button data-action="back" data-view="tenant/home" class="btn w-full bg-transparent text-white/70 mt-2">' + t('cancel') + '</button>'
+        '<p class="text-xs text-white/55 leading-snug my-4">' + t('cliq_explain') + '</p>' +
+        slideControl() +
+        '<button data-action="back" data-view="tenant/home" class="btn w-full bg-transparent text-white/70 mt-3">' + t('cancel') + '</button>' +
+      '</div>'
     );
+  }
+
+  /* tappable "confirm this detail" chip (Step A acknowledgement) */
+  function ackChip(key, label, value, valueCls) {
+    return '<button type="button" id="ack-' + key + '" data-ackkey="' + key + '" aria-pressed="false" ' +
+      'class="ack-chip w-full text-start flex items-center gap-3 rounded-xl border border-white/15 bg-darknavy px-3 py-3 mb-3 min-h-[56px]">' +
+      '<span class="ack-mark w-6 h-6 rounded-full border-2 border-white/30 grid place-items-center shrink-0 text-white"></span>' +
+      '<span class="min-w-0 flex-1">' +
+        '<span class="block text-xs text-white/55">' + label + '</span>' +
+        '<span class="block ' + (valueCls || 'font-medium') + ' truncate">' + value + '</span>' +
+      '</span>' +
+      '<span class="ack-hint text-[11px] text-white/45 shrink-0">' + t('ap_tap_confirm') + '</span>' +
+    '</button>';
+  }
+
+  /* slide-to-approve control (Step B) + hidden processing row (Step C).
+     Disabled until both detail chips are confirmed. */
+  function slideControl() {
+    return '<div id="slideArea" class="select-none">' +
+      '<div id="slideTrack" aria-disabled="true" ' +
+        'class="relative h-14 rounded-full bg-darknavy border border-white/15 overflow-hidden opacity-40 pointer-events-none">' +
+        '<div id="slideFill" class="absolute inset-y-0 start-0 bg-emerald/30" style="width:0"></div>' +
+        '<span id="slideLabel" class="absolute inset-0 grid place-items-center text-sm font-semibold text-white/80 pointer-events-none">' + t('slide_label') + '</span>' +
+        '<button id="slideThumb" type="button" tabindex="0" aria-label="' + t('slide_a11y') + '" ' +
+          'class="absolute top-1 start-1 w-12 h-12 rounded-full bg-emerald grid place-items-center text-white touch-none">' +
+          AR.app.icon('fwd', 'w-6 h-6 rtl:-scale-x-100') +
+        '</button>' +
+      '</div>' +
+      '<div id="slideProcessing" class="hidden items-center justify-center gap-3 h-14">' +
+        '<span class="spinner"></span><span class="text-sm text-white/80">' + t('processing_label') + '</span>' +
+      '</div>' +
+    '</div>';
   }
 
   function due_ym() {
@@ -227,9 +264,14 @@
           '<p class="text-white/55">' + t('confirmation_ref') + '</p>' +
           '<p class="font-bold tnum mt-0.5">' + (S.shared.laylaPaymentRef || '') + '</p>' +
         '</div>' +
-        '<div class="mt-3 flex items-center justify-center gap-2 text-emerald text-sm font-semibold">' +
-          icon('gauge', 'w-4 h-4') + '<span>' + t('score_ticked') + ' · ' + S.tenantScore.value + '</span>' +
+        '<p class="text-xs text-emerald/90 leading-snug mt-3">' + t('success_landlord_line') + '</p>' +
+      '</div>' +
+      // Rent-Trust Score ticked up, shown with its explanation (three-layer)
+      '<div class="card p-4 mt-4">' +
+        '<div class="flex items-center gap-2 mb-2 text-emerald text-sm font-semibold">' +
+          icon('gauge', 'w-4 h-4') + '<span>' + t('score_ticked') + '</span>' +
         '</div>' +
+        AR.scores.render(S.tenantScore, { compact: false, own: true }) +
       '</div>' +
       '<button data-action="nav" data-view="tenant/home" class="btn w-full bg-white/10 text-white mt-5">' + t('back_home') + '</button>'
     );
@@ -377,7 +419,7 @@
       '</div>';
 
     return wrap(
-      '<h1 class="text-2xl font-bold mb-4">' + t('greeting', { name: L(S.landlordName) }) + '</h1>' +
+      '<h1 class="text-2xl font-bold mb-4 truncate">' + t('greeting', { name: L(S.landlordName) }) + '</h1>' +
       hero + portfolio
     );
   }
@@ -545,6 +587,124 @@
   function mount(view, params, S) {
     if (view === 'landlord/addProperty') setupPropertyForm(S);
     else if (view === 'landlord/addTenant') setupTenantForm(S);
+    else if (view === 'tenant/approval') setupApproval(S);
+  }
+
+  /* -------------------------------------------------------------- */
+  /*  Approval interaction engine (Steps A → B → C, then app.approve
+      = Step D). Uses Pointer Events so the slide works with touch on
+      mobile Safari; falls back to Enter/Space on the focused thumb
+      for keyboard/assistive use. Nothing auto-commits. */
+  /* -------------------------------------------------------------- */
+  function setupApproval(S) {
+    var panel = document.getElementById('approvePanel');
+    if (!panel) return;
+    var narr = document.getElementById('approveNarration');
+    var track = document.getElementById('slideTrack');
+    var thumb = document.getElementById('slideThumb');
+    var fill = document.getElementById('slideFill');
+    var label = document.getElementById('slideLabel');
+    var proc = document.getElementById('slideProcessing');
+
+    var ack = { amount: false, recipient: false };
+    var enabled = false, dragging = false, completed = false, progress = 0;
+    var dir = AR.i18n.isRTL() ? -1 : 1;
+    var startCenterX = 0, maxTravel = 0;
+
+    // Step A — acknowledge the key details
+    ['amount', 'recipient'].forEach(function (k) {
+      var btn = document.getElementById('ack-' + k);
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        if (ack[k]) return;
+        ack[k] = true;
+        btn.setAttribute('aria-pressed', 'true');
+        btn.classList.add('border-emerald');
+        btn.classList.remove('border-white/15');
+        var mark = btn.querySelector('.ack-mark');
+        mark.classList.add('bg-emerald', 'border-emerald');
+        mark.classList.remove('border-white/30');
+        mark.innerHTML = AR.app.icon('check', 'w-4 h-4');
+        var hint = btn.querySelector('.ack-hint');
+        hint.textContent = t('ap_confirmed');
+        hint.classList.add('text-emerald');
+        hint.classList.remove('text-white/45');
+        maybeEnable();
+      });
+    });
+
+    function maybeEnable() {
+      if (enabled || !(ack.amount && ack.recipient)) return;
+      enabled = true;
+      track.classList.remove('opacity-40', 'pointer-events-none');
+      track.removeAttribute('aria-disabled');
+      if (narr) narr.textContent = t('ap_narr_slide');
+    }
+
+    function setProgress(p) {
+      progress = Math.max(0, Math.min(1, p));
+      var mt = track.clientWidth - thumb.offsetWidth - 8;
+      thumb.style.transform = 'translateX(' + (dir * progress * mt) + 'px)';
+      fill.style.width = (progress * 100) + '%';
+    }
+
+    // Step B — slide gesture
+    function onDown(e) {
+      if (!enabled || completed) return;
+      dragging = true;
+      var tr = thumb.getBoundingClientRect();
+      startCenterX = tr.left + tr.width / 2;
+      maxTravel = track.clientWidth - thumb.offsetWidth - 8;
+      try { thumb.setPointerCapture(e.pointerId); } catch (_) {}
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      setProgress((dir * (e.clientX - startCenterX)) / maxTravel);
+    }
+    function onUp() {
+      if (!dragging) return;
+      dragging = false;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      if (progress >= 0.9) complete();
+      else animateBack();
+    }
+    function animateBack() {
+      thumb.style.transition = 'transform .2s';
+      setProgress(0);
+      setTimeout(function () { thumb.style.transition = ''; }, 220);
+    }
+    function complete() {
+      if (completed) return;
+      completed = true;
+      thumb.style.transition = 'transform .15s';
+      setProgress(1);
+      if (label) label.textContent = t('slide_done');
+      track.classList.add('pointer-events-none');
+      startProcessing();
+    }
+    // Step C — processing, then Step D (success)
+    function startProcessing() {
+      if (narr) narr.textContent = t('ap_narr_processing');
+      track.classList.add('hidden');
+      proc.classList.remove('hidden');
+      proc.classList.add('flex');
+      setTimeout(function () { AR.app.approve(); }, 1500);
+    }
+
+    thumb.addEventListener('pointerdown', onDown);
+    thumb.addEventListener('keydown', function (e) {
+      if (!enabled || completed) return;
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        complete();
+      }
+    });
   }
 
   function setupPropertyForm(S) {

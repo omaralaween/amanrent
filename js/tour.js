@@ -38,7 +38,7 @@
     { // 4 — ACTION: review then approve
       ensure: function () { if (app().view !== 'tenant/home' && app().view !== 'tenant/approval') app().go('tenant/home'); },
       target: function (v) {
-        if (v === 'tenant/approval') return '#approveBtn';
+        if (v === 'tenant/approval') return '#approvePanel';
         if (v === 'tenant/success') return null;
         return '#reviewBtn';
       },
