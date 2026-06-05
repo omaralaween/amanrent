@@ -1,0 +1,19 @@
+{
+  "name": "AmanRent — demonstration",
+  "short_name": "AmanRent",
+  "description": "AmanRent demonstration app. Mock data only.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1A3F",
+  "theme_color": "#1B2B6B",
+  "icons": [
+    {
+      "src": "AmanRent%20Logo%20-%20Green.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

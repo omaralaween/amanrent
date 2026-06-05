@@ -1,0 +1,196 @@
+/* ============================================================
+   AmanRent demo — custom styles
+   Tailwind (Play CDN) does the heavy lifting; this file holds
+   the phone frame, fonts, RTL-safe helpers, and the animations
+   for autofill / tour / score-expand that Tailwind can't express.
+   ============================================================ */
+
+:root {
+  --navy: #1B2B6B;
+  --darknavy: #0F1A3F;
+  --emerald: #00A86B;
+  --platinum: #F4F4F5;
+  --frame-max: 430px;
+}
+
+* { -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', 'Tajawal', system-ui, Arial, Helvetica, sans-serif;
+  background: #0a1230; /* neutral backdrop behind the phone frame on desktop */
+  color: #fff;
+}
+
+/* Arabic gets a font better suited to its letterforms */
+[dir="rtl"] body,
+[dir="rtl"] .app-shell {
+  font-family: 'Tajawal', 'Noto Kufi Arabic', 'Inter', system-ui, Arial, sans-serif;
+}
+
+/* ---- Desktop: centered phone frame ---------------------------------- */
+.frame-backdrop {
+  min-height: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(0,168,107,0.10), transparent 60%),
+    #0a1230;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  max-width: var(--frame-max);
+  height: 100vh;
+  height: 100dvh; /* avoid mobile URL-bar jump; falls back to 100vh */
+  background: var(--darknavy);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  .frame-backdrop { padding: 24px 0; align-items: center; }
+  .app-shell {
+    min-height: min(900px, calc(100vh - 48px));
+    height: min(900px, calc(100vh - 48px));
+    border-radius: 36px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 10px #05091c, 0 0 0 12px #1c2545;
+  }
+}
+
+/* The scrolling content region between top bar and bottom nav */
+.screen-scroll {
+  flex: 1 1 auto;
+  min-height: 0; /* let the flex child actually scroll inside the frame */
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+.screen-scroll::-webkit-scrollbar { width: 6px; }
+.screen-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 6px; }
+
+/* ---- Card elevation (subtle, per brand) ----------------------------- */
+.card {
+  background: var(--navy);
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+}
+.card-light {
+  background: #fff;
+  color: var(--navy);
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+}
+
+/* ---- Buttons: 48px min tap target ---------------------------------- */
+.btn { min-height: 52px; border: none; cursor: pointer; font-weight: 600; border-radius: 14px; }
+.btn:active { transform: translateY(1px); }
+.tap { min-height: 48px; }
+
+/* ---- Score expand (Layer 3) inline animation ----------------------- */
+.score-detail {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 280ms ease;
+}
+.score-detail > div { overflow: hidden; }
+.score-detail.open { grid-template-rows: 1fr; }
+
+/* ---- Autofill: active field highlight + fake cursor ----------------- */
+.af-active {
+  outline: 2px solid var(--emerald);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px rgba(0,168,107,0.18);
+  transition: box-shadow 150ms ease;
+}
+.af-caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-inline-start: 1px;
+  background: var(--emerald);
+  vertical-align: text-bottom;
+  animation: af-blink 900ms steps(2, start) infinite;
+}
+@keyframes af-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* Narration bar shown during autofill */
+.narration {
+  background: rgba(0,168,107,0.12);
+  border: 1px solid rgba(0,168,107,0.45);
+  color: #c9f7e3;
+}
+
+/* ---- Toast / simulated notification --------------------------------- */
+@keyframes toast-in {
+  from { transform: translateY(-12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.toast-in { animation: toast-in 260ms ease-out; }
+
+/* ---- Tour spotlight -------------------------------------------------- */
+.tour-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none; /* children opt back in */
+}
+.tour-hole {
+  position: absolute;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(6,10,30,0.72);
+  border: 2px solid var(--emerald);
+  transition: all 240ms ease;
+  pointer-events: none;
+}
+.tour-card {
+  position: absolute;
+  pointer-events: auto;
+  max-width: 320px;
+  background: #fff;
+  color: var(--navy);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+}
+.tour-backdrop-block {
+  position: absolute; inset: 0;
+  pointer-events: auto; /* blocks stray taps during info steps */
+}
+
+/* ---- Splash fade -----------------------------------------------------
+   No fill-mode: the element's resting state is its normal (visible)
+   state, so content is NEVER stuck hidden if the animation doesn't
+   run (reduced-motion, slow paint, headless capture). The fade is a
+   transient flourish only. */
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+.fade-up { animation: fade-up 480ms ease both; }
+.delay-1 { animation-delay: 120ms; }
+.delay-2 { animation-delay: 240ms; }
+.delay-3 { animation-delay: 360ms; }
+@media (prefers-reduced-motion: reduce) {
+  .fade-up, .pop, .toast-in, .screen-in { animation: none !important; }
+}
+
+/* Success pulse */
+@keyframes pop { 0%{transform:scale(.7);opacity:0;} 60%{transform:scale(1.05);} 100%{transform:scale(1);opacity:1;} }
+.pop { animation: pop 420ms cubic-bezier(.2,.8,.2,1) both; }
+
+/* Generic enter for screens */
+@keyframes screen-in { from { opacity: 0; } to { opacity: 1; } }
+.screen-in { animation: screen-in 200ms ease both; }
+
+/* Make number figures feel deliberate */
+.tnum { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* Utility: hide scrollbar on horizontal chips if any */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

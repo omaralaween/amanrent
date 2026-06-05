@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>AmanRent — demonstration</title>
+  <meta name="description" content="AmanRent demonstration app — Jordan's fintech trust infrastructure for the rental market. Mock data only." />
+  <meta name="theme-color" content="#1B2B6B" />
+
+  <!-- Add-to-home-screen friendly -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="AmanRent%20Logo%20-%20Green.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AmanRent" />
+
+  <!-- Brand typeface + Arabic face -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind via Play CDN — no build step, works directly on GitHub Pages -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: '#1B2B6B',
+            darknavy: '#0F1A3F',
+            emerald: '#00A86B',
+            platinum: '#F4F4F5'
+          },
+          screens: { xs: '400px' },
+          fontFamily: {
+            sans: ['Inter', 'Tajawal', 'system-ui', 'Arial', 'Helvetica', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <!-- App mounts here; everything renders inside a centered phone frame -->
+  <div id="app" class="frame-backdrop"></div>
+
+  <!-- Window-level overlays (kept outside #app so re-renders don't wipe them) -->
+  <div id="toasts" class="fixed top-4 inset-x-0 z-[70] px-3 space-y-2 pointer-events-none"></div>
+  <div id="tour"></div>
+
+  <!-- Modules load in dependency order; app.js boots on DOMContentLoaded -->
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/scores.js"></script>
+  <script src="js/autofill.js"></script>
+  <script src="js/screens.js"></script>
+  <script src="js/tour.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
