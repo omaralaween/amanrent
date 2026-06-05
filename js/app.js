@@ -12,6 +12,7 @@
   var view = 'splash';   // current full-screen view id
   var params = {};       // params for the current view
   var menuOpen = false;
+  var autoTourStarted = false; // session-scoped: auto-run the tour once per page load
 
   /* ---- date helpers (deterministic from "today") ---------------- */
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -70,6 +71,7 @@
     var P = {
       home: '<path d="M3 11.5 12 4l9 7.5M5 10v10h14V10"/>',
       fwd: '<path d="M9 5l7 7-7 7"/>',
+      swap: '<path d="M4 8h12"/><path d="M13 5l3 3-3 3"/><path d="M20 16H8"/><path d="M11 13l-3 3 3 3"/>',
       lease: '<path d="M7 3h7l4 4v14H7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/>',
       card: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
       gauge: '<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-3"/>',
@@ -100,6 +102,12 @@
       '<button data-action="lang-toggle" class="tap px-3 rounded-full bg-white/10 text-white text-sm font-semibold" ' +
       'aria-label="Language">' + (S.lang === 'ar' ? 'EN' : 'ع') + '</button>';
 
+    // Switch role is a direct control that navigates to the role-chooser
+    // screen (no in-place popover for role switching).
+    var switchRoleBtn =
+      '<button data-action="switch-role" class="tap w-11 rounded-full bg-white/10 text-white grid place-items-center" ' +
+      'aria-label="' + AR.t('switch_role') + '" title="' + AR.t('switch_role') + '">' + icon('swap', 'w-5 h-5') + '</button>';
+
     var menuBtn =
       '<button data-action="menu-toggle" class="tap w-11 rounded-full bg-white/10 text-white grid place-items-center" ' +
       'aria-haspopup="true" aria-expanded="' + (menuOpen ? 'true' : 'false') + '" ' +
@@ -114,7 +122,7 @@
           '<span class="font-bold text-white truncate">' + AR.t('brand') + '</span>' +
           '<span class="hidden xs:inline shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-emerald/15 text-emerald border border-emerald/30">' + AR.t('mock_badge') + '</span>' +
         '</div>' +
-        '<div class="flex items-center gap-2 shrink-0">' + langBtn + menuBtn + '</div>' +
+        '<div class="flex items-center gap-2 shrink-0">' + langBtn + switchRoleBtn + menuBtn + '</div>' +
       '</header>';
   }
 
@@ -130,9 +138,7 @@
       '<div class="absolute inset-0 z-[60]">' +
         '<div data-action="menu-close" class="absolute inset-0 bg-black/40"></div>' +
         '<div role="menu" class="absolute end-2 top-[60px] w-56 max-w-[78%] card-light p-1 rounded-2xl shadow-2xl ring-1 ring-black/10 fade-up text-start">' +
-          item('switch-role', AR.t('switch_role')) +
           item('take-tour', AR.t('take_tour')) +
-          '<div class="h-px bg-black/10 my-1"></div>' +
           item('reset-demo', '<span class="text-red-600">' + AR.t('reset_demo') + '</span>') +
         '</div>' +
       '</div>';
@@ -209,12 +215,20 @@
     if (AR.tour) AR.tour.notify('approved');
   }
 
+  // Single source of truth for "clean curated starting state": wipes
+  // storage and re-seeds (Layla unpaid, scores at initial values, pools
+  // full/unused). The tour reuses this on start and on finish/skip.
+  function resetState() {
+    S = AR.storage.reset();
+    S.lang = AR.i18n.lang; // keep the current language for convenience
+    save();
+    return S;
+  }
+
   function doReset() {
     if (!window.confirm(AR.t('reset_confirm'))) return;
-    S = AR.storage.reset();
-    S.lang = AR.i18n.lang; // keep current language for convenience
-    save();
     if (AR.tour) AR.tour.stop();
+    resetState();
     go('splash');
     toast(AR.t('reset_demo'));
   }
@@ -222,10 +236,13 @@
   function handleAction(action, ds, el) {
     switch (action) {
       case 'enter-demo':
-        go('role');
-        if (!S.tourAutoStarted) {
-          S.tourAutoStarted = true; save();
-          if (AR.tour) AR.tour.start();
+        // Auto-run the tour once per page load (a true "first launch").
+        // tour.start() resets to the clean state and begins at step 1.
+        if (!autoTourStarted && AR.tour) {
+          autoTourStarted = true;
+          AR.tour.start();
+        } else {
+          go('role');
         }
         break;
       case 'choose-role':
@@ -251,12 +268,13 @@
         menuOpen = false; render();
         break;
       case 'switch-role':
-        setRole(S.role === 'tenant' ? 'landlord' : 'tenant');
-        go(S.role + '/home');
+        // Go to the role-chooser screen; the role is picked there.
+        go('role');
         break;
       case 'take-tour':
         menuOpen = false;
-        if (AR.tour) AR.tour.start();
+        autoTourStarted = true; // suppress a later auto-start this session
+        if (AR.tour) AR.tour.start(); // start() resets first, then runs step 1
         break;
       case 'reset-demo':
         doReset();
@@ -330,6 +348,7 @@
     setLang: setLang,
     render: render,
     approve: approvePayment,
+    resetState: resetState,
     toast: toast,
     icon: icon,
     logoImg: logoImg,

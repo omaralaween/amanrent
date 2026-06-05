@@ -38,7 +38,13 @@
     { // 4 — ACTION: review then approve
       ensure: function () { if (app().view !== 'tenant/home' && app().view !== 'tenant/approval') app().go('tenant/home'); },
       target: function (v) {
-        if (v === 'tenant/approval') return '#approvePanel';
+        if (v === 'tenant/approval') {
+          // Track the current sub-action so the card never covers the
+          // control the instructor must touch right now: the confirm
+          // chips first, then the slide control once both are confirmed.
+          return (AR.screens.approveReady && AR.screens.approveReady())
+            ? '#slideArea' : '#approveChips';
+        }
         if (v === 'tenant/success') return null;
         return '#reviewBtn';
       },
@@ -90,7 +96,10 @@
     var sel = step.target(app().view);
     var target = sel ? document.querySelector(sel) : null;
     if (sel && target) {
-      try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+      // Instant + 'nearest' so the target keeps its natural vertical
+      // position (the card placement below depends on which half it's in),
+      // and the rect we read next frame is already settled.
+      try { target.scrollIntoView({ block: 'nearest', behavior: 'auto' }); } catch (e) {}
     }
     // wait a frame so scroll/layout settles, then draw
     requestAnimationFrame(function () { draw(step, target); });
@@ -147,9 +156,14 @@
     var winH = window.innerHeight;
     var top, left;
     if (holeRect) {
-      // below the hole if room, else above
-      if (holeRect.bottom + ch + 14 < winH) top = holeRect.bottom + 12;
-      else top = Math.max(12, holeRect.top - ch - 12);
+      // Place the card on the opposite side from where the target sits:
+      // target in the UPPER half -> card BELOW it; LOWER half -> card ABOVE.
+      // This keeps the spotlighted control visible and tappable.
+      var targetCenterY = holeRect.top + holeRect.h / 2;
+      var placeBelow = targetCenterY < winH / 2;
+      if (placeBelow) top = holeRect.bottom + 12;
+      else top = holeRect.top - ch - 12;
+      top = clamp(top, 12, winH - ch - 12);
       var centerX = holeRect.left + holeRect.w / 2;
       left = clamp(centerX - cw / 2, sr.left + 12, sr.right - cw - 12);
     } else {
@@ -176,18 +190,23 @@
   }
 
   function start() {
+    // Always begin from an identical clean state (clear + re-seed), then
+    // run from step 1. Reuses the app's "Reset demo" logic.
+    if (app().resetState) app().resetState();
     active = true;
     idx = 0;
     addListeners();
     showStep(0);
   }
 
-  function finish(skipped) {
+  // Finishing or skipping resets to the clean curated state and drops the
+  // instructor into the normal app (role chooser) with no tour running.
+  function finish() {
     active = false;
     removeListeners();
     if (layer) layer.innerHTML = '';
-    var S = app().state;
-    if (S) { S.tourCompleted = true; app().save(); }
+    if (app().resetState) app().resetState();
+    app().go('role');
   }
 
   function stop() { active = false; removeListeners(); if (layer) layer.innerHTML = ''; }

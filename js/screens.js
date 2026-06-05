@@ -196,10 +196,14 @@
       backHeader(t('approve_title'), 'tenant/home') +
       '<div id="approvePanel">' +
         '<div id="approveNarration" class="narration text-sm rounded-xl px-3 py-2 leading-snug mb-4">' + t('ap_narr_review') + '</div>' +
-        '<div class="card p-4">' +
+        '<div id="approveDetails" class="card p-4">' +
           '<p class="text-xs text-white/50 mb-3">' + t('via_cliq') + '</p>' +
-          ackChip('amount', t('amount'), money(S.lease.rent), 'text-2xl font-bold tnum text-emerald') +
-          ackChip('recipient', t('recipient'), L(S.lease.landlord), 'font-semibold') +
+          // chips grouped so the tour can spotlight just them (a small,
+          // upper target) and keep its caption clear of them
+          '<div id="approveChips">' +
+            ackChip('amount', t('amount'), money(S.lease.rent), 'text-2xl font-bold tnum text-emerald') +
+            ackChip('recipient', t('recipient'), L(S.lease.landlord), 'font-semibold') +
+          '</div>' +
           '<div class="space-y-2 text-sm border-t border-white/10 pt-3 mt-1">' +
             row(t('property_label'), L(S.lease.property)) +
             row(t('reference'), ref) +
@@ -583,6 +587,8 @@
   /* pending pool entries chosen for the current form */
   var pendingProp = null;
   var pendingTenant = null;
+  /* approval flow: have both detail chips been confirmed? (read by the tour) */
+  var approveReady = false;
 
   function mount(view, params, S) {
     if (view === 'landlord/addProperty') setupPropertyForm(S);
@@ -598,6 +604,7 @@
   /* -------------------------------------------------------------- */
   function setupApproval(S) {
     var panel = document.getElementById('approvePanel');
+    approveReady = false; // both details confirmed yet? (used by the tour)
     if (!panel) return;
     var narr = document.getElementById('approveNarration');
     var track = document.getElementById('slideTrack');
@@ -636,9 +643,12 @@
     function maybeEnable() {
       if (enabled || !(ack.amount && ack.recipient)) return;
       enabled = true;
+      approveReady = true;
       track.classList.remove('opacity-40', 'pointer-events-none');
       track.removeAttribute('aria-disabled');
       if (narr) narr.textContent = t('ap_narr_slide');
+      // let the tour move its spotlight from the chips to the slide control
+      if (AR.tour) AR.tour.reposition();
     }
 
     function setProgress(p) {
@@ -800,7 +810,8 @@
     content: content,
     mount: mount,
     commitProperty: commitProperty,
-    commitTenant: commitTenant
+    commitTenant: commitTenant,
+    approveReady: function () { return approveReady; }
   };
 
 })(window.AR = window.AR || {});
